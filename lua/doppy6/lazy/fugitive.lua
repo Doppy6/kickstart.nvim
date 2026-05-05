@@ -10,8 +10,8 @@ return {
         if vim.bo.ft ~= 'fugitive' then return end
 
         local bufnr = vim.api.nvim_get_current_buf()
-        vim.keymap.set('n', '<leader>p', function() vim.cmd.Git('push', { desc = 'Push to Repo', buffer = bufnr, remap = false }) end)
-        vim.keymap.set('n', '<leader>P', function() vim.cmd.Git({ 'pull', '--rebase' }, { desc = 'Pulling from Repo', buffer = bufnr, remap = false }) end)
+        vim.keymap.set('n', '<leader>p', function() vim.cmd.Git 'push' end, { desc = 'Push to Repo', buffer = bufnr, remap = false })
+        vim.keymap.set('n', '<leader>P', function() vim.cmd.Git 'pull' end, { desc = 'Pulling from Repo', buffer = bufnr, remap = false })
       end,
     })
   end,
