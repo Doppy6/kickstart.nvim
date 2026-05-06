@@ -1,6 +1,7 @@
-require 'doppy6.set'
 require 'doppy6.keymap'
+require 'doppy6.set'
 require 'doppy6.lazy_init'
+require 'doppy6.ft'
 
 vim.diagnostic.config {
   update_in_insert = false,
