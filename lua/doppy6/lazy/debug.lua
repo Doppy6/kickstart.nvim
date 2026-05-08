@@ -122,5 +122,104 @@ return {
         detached = vim.fn.has 'win32' == 0,
       },
     }
+    dap.adapters.ansible = {
+      type = 'executable',
+      command = 'python3',
+      args = { '-m', 'ansibug', 'dap' },
+    }
+
+    local ansibug_configurations = {
+      {
+        type = 'ansible',
+        request = 'launch',
+        name = 'Debug playbook',
+        playbook = '${file}',
+      },
+    }
+
+    dap.configurations['yaml.ansible'] = ansibug_configurations
+    dap.adapters.python = function(cb, config)
+      if config.request == 'attach' then
+        ---@diagnostic disable-next-line: undefined-field
+        local port = (config.connect or config).port
+        ---@diagnostic disable-next-line: undefined-field
+        local host = (config.connect or config).host or '127.0.0.1'
+        cb {
+          type = 'server',
+          port = assert(port, '`connect.port` is required for a python `attach` configuration'),
+          host = host,
+          options = {
+            source_filetype = 'python',
+          },
+        }
+      else
+        cb {
+          type = 'executable',
+          command = 'path/to/virtualenvs/debugpy/bin/python',
+          args = { '-m', 'debugpy.adapter' },
+          options = {
+            source_filetype = 'python',
+          },
+        }
+      end
+    end
+
+    dap.configurations.python = {
+      {
+        type = 'python',
+        request = 'launch',
+        name = 'launch file',
+        program = '${file}',
+        pythonPath = function()
+          local cwd = vim.fn.getcwd()
+          if vim.fn.executable(cwd .. '/venv/bin/python') == 1 then
+            return cwd .. '/venv/bin/python'
+          elseif vim.fn.executable(cwd .. '/.venv/bin/python') then
+            return cwd .. '/.venv/bin/python'
+          else
+            return '/usr/bin/python3'
+          end
+        end,
+      },
+    }
+
+    dap.adapters.gdb = {
+      type = 'executable',
+      command = 'gdb',
+      args = { '--interpreter = dap', '--eval-command', 'set print pretty on' },
+    }
+
+    dap.configurations.c = {
+      {
+        name = 'Launch',
+        type = 'gdb',
+        request = 'launch',
+        program = function() return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file') end,
+        args = {},
+        cwd = '${workspaceFolder',
+      },
+      stopAtBeginningOfMainSubprogram = false,
+      {
+        name = 'Select and attach to process',
+        type = 'gdb',
+        request = 'attach',
+        program = function() return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file') end,
+        pid = function()
+          local name = vim.fn.input 'Executable name (filter): '
+          return require('dap.utils').pick_process { filter = name }
+        end,
+        cwd = '${workspaceFolder}',
+      },
+      {
+        name = 'Attach to gdbserver :1234',
+        type = 'gdb',
+        request = 'attach',
+        target = 'localhost:1234',
+        program = function() return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file') end,
+        cwd = '${workspaceFolder}',
+      },
+    }
+
+    dap.configurations.cpp = dap.configurations.c
   end,
 }
